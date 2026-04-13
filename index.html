@@ -1006,16 +1006,17 @@ async function submitReport(){
     try{
       const resp=await fetch(GAS_CONFIG.url,{
         method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify(payload)
       });
       const data=await resp.json();
       if(data.id){
         _showSuccess(data.id,reporter);
       } else {
-        alert('Error al enviar el reporte. Inténtalo de nuevo.');
+        alert('Error al enviar el reporte. Respuesta: '+JSON.stringify(data));
       }
     }catch(e){
-      alert('Error de conexión: '+e.message);
+      alert('Error de conexión: '+e.message+'\n\nAsegúrate de que la URL del servidor es correcta y que el script está desplegado como "Cualquiera".');
     }
   }
   stopTimer(); btn.disabled=false; btn.textContent=t('btnSubmit');
