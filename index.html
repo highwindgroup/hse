@@ -1009,17 +1009,13 @@ async function submitReport(){
     _showSuccess(id,reporter);
   } else {
     try{
-      // Usar no-cors: evita problemas de CORS/redirect con Google Apps Script.
-      // No podemos leer la respuesta, pero el servidor SÍ recibe y guarda los datos.
-      // El ID se genera en el cliente y se incluye en el payload para que coincida.
-      fetch(GAS_CONFIG.url,{
-        method:'POST',
-        mode:'no-cors',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify(payload)
-      }).catch(()=>{}); // ignorar errores de red silenciosamente
-
-      // Mostrar éxito inmediatamente con el ID generado en el cliente
+      // Técnica del formulario oculto: funciona en iOS Safari y todos los navegadores.
+      // Los form submit cross-origin son siempre permitidos (preexisten al CORS).
+      // A diferencia de fetch con no-cors, garantiza que el body llega al servidor.
+      const gasForm = document.getElementById('gas-form');
+      document.getElementById('gas-form-data').value = JSON.stringify(payload);
+      gasForm.action = GAS_CONFIG.url;
+      gasForm.submit();
       _showSuccess(clientId, reporter);
     }catch(e){
       alert('Error al enviar: '+e.message);
@@ -1299,5 +1295,10 @@ applyTranslations();
 updateAdminUI();
 if(new URLSearchParams(window.location.search).has('admin')) openAdminModal();
 </script>
+<!-- Formulario oculto para envío cross-origin compatible con iOS Safari -->
+<iframe name="gas-iframe" style="display:none" aria-hidden="true"></iframe>
+<form id="gas-form" method="POST" target="gas-iframe" style="display:none">
+  <input type="hidden" name="data" id="gas-form-data">
+</form>
 </body>
 </html>
