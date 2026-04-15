@@ -852,6 +852,24 @@ function getStatusLabel(s){return{open:t('statusOpen'),review:t('statusReview'),
 function getSevLabel(s){return{low:t('sevLow'),medium:t('sevMedium'),high:t('sevHigh')}[s]||s;}
 function getTypeLabel(s){return{unsafe_condition:t('typeCond'),unsafe_act:t('typeAct'),improvement:t('typeImprov')}[s]||s;}
 
+// Limpia fechas que Google Sheets devuelve como ISO completo (2026-04-14T22:00:00.000Z → 2026-04-14)
+function fmtDate(d){
+  if(!d) return '';
+  var s=String(d);
+  return s.indexOf('T')>=0?s.split('T')[0]:s;
+}
+// Limpia horas que Google Sheets devuelve como epoch Excel (1899-12-30T10:20:44.000Z → 10:20)
+function fmtTime(t){
+  if(!t) return '';
+  var s=String(t);
+  if(s.indexOf('T')>=0){
+    // "1899-12-30T10:20:44.000Z" → "10:20"
+    return s.split('T')[1].slice(0,5);
+  }
+  return s.slice(0,5); // "10:20:00" → "10:20"
+}
+
+
 async function renderDashboard(){
   if(!isAdmin()){ openAdminModal(); return; }
   if(!GAS_CONFIG.url){ showSetupBanner(); renderFilterRow(); renderIncidents(); applyTranslations(); return; }
@@ -899,7 +917,7 @@ function renderIncidents(){
         <span class="badge sev-badge-${inc.severity}">${getSevLabel(inc.severity)}</span>
         <span class="inc-meta-sep">·</span><span>${getTypeLabel(inc.type)}</span>
         <span class="inc-meta-sep">·</span><span>${inc.project}</span>
-        <span class="inc-meta-sep">·</span><span>${inc.date}${inc.time?' '+inc.time:''}</span>
+        <span class="inc-meta-sep">·</span><span>${fmtDate(inc.date)}${fmtTime(inc.time)?' '+fmtTime(inc.time):''}</span>
         ${inc.media&&inc.media.length?'<span class="inc-meta-sep">·</span><span>📎 '+inc.media.length+'</span>':''}
         ${inc.reporter?'<span class="inc-meta-sep">·</span><span style="color:var(--blue-dark);font-weight:600;">✉️ '+t('identifiedLabel')+'</span>':''}
       </div>
@@ -926,7 +944,7 @@ function buildDetailHTML(inc){
   <div class="detail-section">
     <div class="detail-section-title">📋 ${t('detailSectionDesc')}</div>
     <div class="detail-meta-grid" style="margin-bottom:12px;">
-      <div class="detail-meta-cell"><div class="detail-meta-lbl">${t('detailMetaDate')}</div><div class="detail-meta-val">${inc.date}${inc.time?' · 🕐 '+inc.time:''}</div></div>
+      <div class="detail-meta-cell"><div class="detail-meta-lbl">${t('detailMetaDate')}</div><div class="detail-meta-val">${fmtDate(inc.date)}${fmtTime(inc.time)?' · 🕐 '+fmtTime(inc.time):''}</div></div>
       <div class="detail-meta-cell"><div class="detail-meta-lbl">${t('detailMetaProject')}</div><div class="detail-meta-val">${inc.project}</div></div>
       <div class="detail-meta-cell"><div class="detail-meta-lbl">${t('detailMetaSev')}</div><div class="detail-meta-val"><span class="badge sev-badge-${inc.severity}">${getSevLabel(inc.severity)}</span></div></div>
       ${reporterRow}
